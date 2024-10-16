@@ -10,7 +10,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace CsharpAPI.Controllers
 {
     [ApiController]
-    [Route("[controller]/[action]")]
+    [Route("[controller]")]
     public class PaymentController : ControllerBase
     {
         private readonly IWebHostEnvironment _env;
@@ -36,13 +36,20 @@ namespace CsharpAPI.Controllers
             }
             return Ok(data);
         }
-        [HttpPost]
+        [HttpPost("CreateOrder")]
         public async Task<IActionResult> CreateOrder(CreateOrderDto createOrderDto)
         {
             var orderId = await _payPalService.CreateOrderAsync(createOrderDto);
 
             return Ok(new { orderId });
         }
+        [HttpGet("confirm-payment")]
+        public async Task<IActionResult> confirmPayment(string email, string price, string time,string token, string PayerID)
+        {
+            var captureResponse = await _payPalService.CaptureOrderAsync(email, price, time, token);
+            return Ok(captureResponse);
+        }
+
 
         //[HttpPost("create-order")]
         //public async Task<IActionResult> CreateOrder(double amount)

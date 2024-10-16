@@ -1,8 +1,12 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
+using CsharpAPI.Data;
 using CsharpAPI.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using MongoDB.Bson;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CsharpAPI
 {
@@ -10,10 +14,12 @@ namespace CsharpAPI
     {
         private readonly IConfiguration _configuration;
         private readonly HttpClient _httpClient;
-        public PayPalService(IConfiguration configuration, HttpClient httpClient)
+        private readonly MongoDbContext mongoDbContext;
+        public PayPalService(IConfiguration configuration, HttpClient httpClient, MongoDbContext mongoDbContext)
         {
             _configuration = configuration;
             _httpClient = httpClient;
+            this.mongoDbContext = mongoDbContext;
         }
         public async Task<AuthorizationResponseData?> GetAccessTokenAsync()
         {
@@ -98,7 +104,7 @@ namespace CsharpAPI
         },
                 application_context = new
                 {
-                    return_url = "https://your-website.com/confirm-payment",
+                    return_url = string.Format("https://localhost:7233/Payment/confirm-payment?email={0}&price={1}&time={2}", amount.email, amount.price,amount.time),
                     cancel_url = "https://your-website.com/cancel-payment"
                 }
             };
@@ -107,26 +113,71 @@ namespace CsharpAPI
             var response = await _httpClient.PostAsync($"{baseUrl}/v2/checkout/orders", requestContent);
             response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
-            var order = JsonConvert.DeserializeObject<PayPalOrderResponse>(json);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                // Log hoặc in ra lỗi từ PayPal API
+                Console.WriteLine($"Error response from PayPal: {responseContent}");
+                throw new Exception($"PayPal API error: {responseContent}");
+            }
+            var order = JsonConvert.DeserializeObject<PayPalOrderResponse>(responseContent);
 
             return order.Id; 
         }
-        public async Task<PayPalCaptureResponse> CaptureOrderAsync(string orderId)
+        public async Task<PayPalCaptureResponse> CaptureOrderAsync(string email, string price, string time, string orderId)
         {
+            //PayPalCaptureResponse captureResponse1 = new PayPalCaptureResponse();
+            //await SavePaymentToDatabase(email, price, time, orderId, captureResponse1);
+
             var accessToken = await GetAccessTokenAsync();
             var baseUrl = _configuration["PayPal:BaseUrl"];
 
+            // Thêm token Bearer vào header
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.access_token);
+            var captureData = new { note_to_payer = "Capture payment for order " + orderId };
+            var captureJson = JsonConvert.SerializeObject(captureData);
+            var requestContent = new StringContent(captureJson, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync($"{baseUrl}/v2/checkout/orders/{orderId}/capture", null);
-            response.EnsureSuccessStatusCode();
+            // Gửi yêu cầu tới PayPal để xác nhận thanh toán
+            var response = await _httpClient.PostAsync($"{baseUrl}/v2/checkout/orders/{orderId}/capture", requestContent);
 
+            // Đọc phản hồi từ PayPal
             var json = await response.Content.ReadAsStringAsync();
-            var captureResponse = JsonConvert.DeserializeObject<PayPalCaptureResponse>(json);
 
-            return captureResponse;
+            if (response.IsSuccessStatusCode)
+            {
+                var captureResponse = JsonConvert.DeserializeObject<PayPalCaptureResponse>(json);
+
+                if (captureResponse.Status == "COMPLETED")
+                {
+                    await SavePaymentToDatabase(email, price, time, orderId, captureResponse);
+
+                    return captureResponse;
+                }
+                else
+                {
+                    throw new Exception($"Payment capture failed with status: {captureResponse.Status}");
+                }
+            }
+            else
+            {
+                throw new Exception($"Error from PayPal API: {json}");
+            }
         }
+        private async Task SavePaymentToDatabase(string email, string price, string time, string orderId, PayPalCaptureResponse captureResponse)
+        {
+           RegisterMember registerMember = new RegisterMember();
+           registerMember._id = ObjectId.GenerateNewId();
+           registerMember.email = email;
+           registerMember.Price = double.Parse(price);
+           registerMember.Time = time;
+           registerMember.OrderId = orderId;
+           registerMember.Status = captureResponse.Status;
+           registerMember.PayPalTransactionId = captureResponse.Id;
+           mongoDbContext.registerMembers.Add(registerMember);
+           await mongoDbContext.SaveChangesAsync();
+        }
+
     }
     public class PayPalAccessTokenResponse
     {

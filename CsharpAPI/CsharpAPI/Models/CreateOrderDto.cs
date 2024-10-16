@@ -4,6 +4,6 @@
     {
        public string? email { get;set; }
        public string? price { get; set; }
-       public string? type { get; set; }
+       public string? time { get; set; }
     }
 }
