@@ -1,0 +1,79 @@
+.wrapper-payment{
+    display: flex;
+    flex-direction: column;
+    max-width: 1280px;
+    margin: 0px auto;
+}
+.payment {
+    display: flex;
+    justify-content: center;
+    color: white;
+    font-size: 35px;
+}
+.plan-card {
+    margin-top: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    overflow: hidden;
+    padding-bottom: 21px;
+    margin-bottom: 30px;
+}
+
+.plan-header {
+    background: linear-gradient(to right, #3b82f6, #2563eb);
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+.plan-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.plan-header p {
+    font-size: 1.2rem;
+}
+
+.plan-body {
+    padding: 20px;
+}
+
+.plan-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    flex-direction: column;
+}
+
+.plan-item:last-child {
+    border-bottom: none;
+}
+
+.plan-item span {
+    color: #555;
+}
+
+.plan-item strong {
+    color: #111;
+    font-weight: bold;
+}
+.button-pay{
+    width: 65%;
+    margin: 0px auto;
+    display: flex;
+    height: 42px;
+    background-color: #d84545;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+}
+.wrap-pay{
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}

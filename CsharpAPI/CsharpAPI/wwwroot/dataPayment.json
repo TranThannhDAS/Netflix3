@@ -1,0 +1,36 @@
+{
+  "Data": [
+    {
+      "Time": "1 week",
+      "Price": "70",
+      "Quality": "Medium",
+      "Resolution": "480p",
+      "SupportDevices": "Mobile Phone, Laptop, Desktop",
+      "NumberDevices": "1"
+    },
+    {
+      "Time": "1 month",
+      "Price": "150",
+      "Quality": "Medium",
+      "Resolution": "1080p",
+      "SupportDevices": "Mobile Phone, Laptop, Desktop",
+      "NumberDevices": "3"
+    },
+    {
+      "Time": "3 months",
+      "Price": "300",
+      "Quality": "High",
+      "Resolution": "1080p",
+      "SupportDevices": "Mobile Phone, Laptop, Desktop",
+      "NumberDevices": "5"
+    },
+    {
+      "Time": "1 year",
+      "Price": "600",
+      "Quality": "High",
+      "Resolution": "4K",
+      "SupportDevices": "Mobile Phone, Laptop, Desktop",
+      "NumberDevices": "10"
+    }
+  ]
+}
