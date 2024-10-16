@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
-import { createOrder, getPaymentconfig } from "../Redux/APIs/PaymentServices";
+import { createOrder, GetDetailPayment, getPaymentconfig } from "../Redux/APIs/PaymentServices";
 import SideBar from "../Screens/Dashboard/SideBar";
 import './Payment.css';
 
 const Payment = () => {
     const [paymentData, setPaymentData] = useState(null);
     const [orderDetail, setorderDetail] = useState(null);
+    const [isDate, setDate] = useState("");
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const data = await getPaymentconfig();
-                console.log(data.data);
-
                 setPaymentData(data.data);
+                const data1 = JSON.parse(localStorage.getItem("userInfo"))
+                const result = await GetDetailPayment(data1.email);
+                
+                setDate(result.expirationDate);
             } catch (error) {
                 console.error("Error fetching payment config:", error);
             }
@@ -26,7 +29,7 @@ const Payment = () => {
          setorderDetail({
                email: data.email,
                price: price,
-               type: time
+               time: time
          });
 
     }
@@ -47,6 +50,7 @@ const Payment = () => {
                     <div className="payment">
                         Register Member
                     </div>
+                    {isDate != "" ? `Ngày hết hạn: ${isDate}` : ""}
                     <div className="wrap-pay">
                         {paymentData && paymentData.length > 0 ? (
                             paymentData.map((element, index) => (
@@ -76,7 +80,7 @@ const Payment = () => {
                                             <strong>{element.numberDevices}</strong>
                                         </div>
                                     </div>
-                                    <div onClick={() => handleClick(element.price, element.time)} className="button-pay">Payment</div>
+                                    <div onClick={() => handleClick(element.price, element.hours)} className="button-pay">Payment</div>
                                 </div>
                             ))
                         ) : (

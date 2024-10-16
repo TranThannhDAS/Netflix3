@@ -16,4 +16,6 @@ public class RegisterMember
     public DateTime? PaymentDate { get; set; } = DateTime.UtcNow;
     public string? Status { get; set; }
     public string? PayPalTransactionId { get; set; }
+    public DateTime? ExpirationDate { get; set; }
+
 }

@@ -7,7 +7,7 @@
       "Resolution": "480p",
       "SupportDevices": "Mobile Phone, Laptop, Desktop",
       "NumberDevices": "1",
-      "Hours": 168
+      "Hours": "168"
     },
     {
       "Time": "1 month",
@@ -16,7 +16,7 @@
       "Resolution": "1080p",
       "SupportDevices": "Mobile Phone, Laptop, Desktop",
       "NumberDevices": "3",
-      "Hours": 720
+      "Hours": "720"
     },
     {
       "Time": "3 months",
@@ -25,7 +25,7 @@
       "Resolution": "1080p",
       "SupportDevices": "Mobile Phone, Laptop, Desktop",
       "NumberDevices": "5",
-      "Hours": 2160
+      "Hours": "2160"
     },
     {
       "Time": "1 year",
@@ -34,7 +34,7 @@
       "Resolution": "4K",
       "SupportDevices": "Mobile Phone, Laptop, Desktop",
       "NumberDevices": "10",
-      "Hours": 8760
+      "Hours": "8760"
     }
   ]
 }

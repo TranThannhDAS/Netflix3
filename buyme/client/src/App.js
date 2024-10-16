@@ -41,6 +41,7 @@ import { getAllCategories } from './Redux/Actions/CategoriesActions';
 import { AdminProtectedRoutes, PublicProtectedRoutes } from './ProtectedRoutes';
 import Payment from './Components/Payment';
 import PaymentAdmin from './Screens/Dashboard/Admin/ManagePayment';
+import ConfirmPayment from './Components/ConfirmPayment';
 
 function App() {
   Aos.init();
@@ -91,6 +92,7 @@ function App() {
               <Route path="/password" element={<Password />} />
               <Route path="/favorites" element={<FavoritesMovies />} />
               <Route path="/payment" element={<Payment />} />
+              <Route path="/confirmPayment" element={<ConfirmPayment />}/>
               {/* ***** PRIVATE ADMIN ROUTES ****** */}
               <Route element={<AdminProtectedRoutes />}>
                 <Route path="/edit/:id" element={<EditMovie />} />

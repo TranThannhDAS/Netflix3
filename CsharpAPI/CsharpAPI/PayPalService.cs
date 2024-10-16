@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static System.Net.WebRequestMethods;
 
 namespace CsharpAPI
 {
@@ -103,12 +104,12 @@ namespace CsharpAPI
             }
         },
                 application_context = new
-                {
-                    return_url = string.Format("https://localhost:7233/Payment/confirm-payment?email={0}&price={1}&time={2}", amount.email, amount.price,amount.time),
-                    cancel_url = "https://your-website.com/cancel-payment"
+                {            
+                    return_url = string.Format("http://localhost:3000/confirmPayment?email={0}&price={1}&time={2}", amount.email, amount.price,amount.time),
+                    cancel_url = "http://localhost:3000"
                 }
             };
-
+            //https://localhost:7233/Payment/confirm-payment 
             var requestContent = new StringContent(JsonConvert.SerializeObject(orderRequest), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync($"{baseUrl}/v2/checkout/orders", requestContent);
             response.EnsureSuccessStatusCode();
@@ -128,7 +129,7 @@ namespace CsharpAPI
         {
             //PayPalCaptureResponse captureResponse1 = new PayPalCaptureResponse();
             //await SavePaymentToDatabase(email, price, time, orderId, captureResponse1);
-
+            PayPalCaptureResponse captureResponse = new PayPalCaptureResponse();
             var accessToken = await GetAccessTokenAsync();
             var baseUrl = _configuration["PayPal:BaseUrl"];
 
@@ -146,7 +147,7 @@ namespace CsharpAPI
 
             if (response.IsSuccessStatusCode)
             {
-                var captureResponse = JsonConvert.DeserializeObject<PayPalCaptureResponse>(json);
+                 captureResponse = JsonConvert.DeserializeObject<PayPalCaptureResponse>(json);
 
                 if (captureResponse.Status == "COMPLETED")
                 {
@@ -156,28 +157,75 @@ namespace CsharpAPI
                 }
                 else
                 {
-                    throw new Exception($"Payment capture failed with status: {captureResponse.Status}");
+                    return captureResponse;
                 }
             }
             else
             {
-                throw new Exception($"Error from PayPal API: {json}");
+                captureResponse.Status = "FALSE";
             }
+            return captureResponse;
         }
         private async Task SavePaymentToDatabase(string email, string price, string time, string orderId, PayPalCaptureResponse captureResponse)
         {
-           RegisterMember registerMember = new RegisterMember();
-           registerMember._id = ObjectId.GenerateNewId();
-           registerMember.email = email;
-           registerMember.Price = double.Parse(price);
-           registerMember.Time = time;
-           registerMember.OrderId = orderId;
-           registerMember.Status = captureResponse.Status;
-           registerMember.PayPalTransactionId = captureResponse.Id;
-           mongoDbContext.registerMembers.Add(registerMember);
-           await mongoDbContext.SaveChangesAsync();
-        }
+            // Tìm thông tin thanh toán của người dùng theo email
+            var paymentregtis = await mongoDbContext.registerMembers.FirstOrDefaultAsync(x => x.email == email);
 
+            if (paymentregtis != null)
+            {
+                // Cập nhật giá tiền
+                paymentregtis.Price += double.Parse(price);
+
+                // Cập nhật thời gian đăng ký (theo giờ)
+                if (double.TryParse(paymentregtis.Time, out var currentTime))
+                {
+                    paymentregtis.Time = (currentTime + double.Parse(time)).ToString(); 
+                }
+                else
+                {
+                    paymentregtis.Time = time; 
+                }
+
+                if (paymentregtis.ExpirationDate.HasValue && paymentregtis.ExpirationDate > DateTime.UtcNow)
+                {
+                    paymentregtis.ExpirationDate = paymentregtis.ExpirationDate.Value.AddHours(double.Parse(time));
+                }
+                else
+                {
+                    paymentregtis.ExpirationDate = paymentregtis.PaymentDate.Value.AddHours(double.Parse(time));
+                }
+            }
+            else
+            {
+                RegisterMember registerMember = new RegisterMember
+                {
+                    _id = ObjectId.GenerateNewId(),
+                    email = email,
+                    Price = double.TryParse(price, out var parsedPrice) ? parsedPrice : throw new ArgumentException("Invalid price format"),
+                    Time = time,
+                    OrderId = orderId,
+                    Status = captureResponse.Status,
+                    PayPalTransactionId = captureResponse.Id,
+                    PaymentDate = DateTime.UtcNow,  
+                    ExpirationDate = DateTime.UtcNow.AddHours(double.Parse(time))
+                };
+
+                mongoDbContext.registerMembers.Add(registerMember);
+            }
+
+            // Lưu thay đổi vào cơ sở dữ liệu
+            await mongoDbContext.SaveChangesAsync();
+        }
+        public async Task<List<RegisterMember>> GetDataRegister()
+        {
+            var result = await mongoDbContext.registerMembers.ToListAsync();
+            return result;
+        }
+        public async Task<RegisterMember> GetDetail(string email)
+        {
+            var result = await mongoDbContext.registerMembers.FirstOrDefaultAsync(x => x.email == email)?? new RegisterMember();
+            return result;
+        }
     }
     public class PayPalAccessTokenResponse
     {
@@ -192,7 +240,7 @@ namespace CsharpAPI
     public class PayPalCaptureResponse
     {
         [JsonProperty("id")]
-        public string Id { get; set; }
+        public string Id {  get; set; }
 
         [JsonProperty("status")]
         public string Status { get; set; }

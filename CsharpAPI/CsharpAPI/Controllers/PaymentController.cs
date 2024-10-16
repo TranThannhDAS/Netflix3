@@ -23,7 +23,8 @@ namespace CsharpAPI.Controllers
             this.mongoDbContext = mongoDbContext;
             _payPalService = payPalService;
         }
-        [HttpGet]
+        [HttpGet("GetDataPayment")]
+
         public async Task<IActionResult> GetDataPayment()
         {
             BaseDataPayment data = new BaseDataPayment();
@@ -49,13 +50,25 @@ namespace CsharpAPI.Controllers
             var captureResponse = await _payPalService.CaptureOrderAsync(email, price, time, token);
             return Ok(captureResponse);
         }
+        [HttpGet("GetAllRegister")]
+        public async Task<IActionResult> GetAllDataRegister()
+        {
+            var result = await _payPalService.GetDataRegister();
+            return Ok(result);
+        }
+        [HttpGet("getDetailRegister")]
+        public async Task<IActionResult> GetDetailRegister(string email)
+        {
+            var result = await _payPalService.GetDetail(email);
+            var data = new
+            {
+                isWatch = result.ExpirationDate.HasValue && result.ExpirationDate.Value > DateTime.Now,
+                ExpirationDate = result.ExpirationDate.HasValue
+                                ? result.ExpirationDate.Value.ToString("dd/MM/yyyy")
+                                : ""
+            };
 
-
-        //[HttpPost("create-order")]
-        //public async Task<IActionResult> CreateOrder(double amount)
-        //{
-        //    var orderId = await _payPalService.CreateOrderAsync(amount);
-        //    return Ok(new { orderId });
-        //}
+            return Ok(data);
+        }
     }
 }

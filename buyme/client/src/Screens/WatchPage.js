@@ -14,13 +14,20 @@ import {
 import { getMovieByIdAction } from "../Redux/Actions/MoviesActions";
 import FileSaver from "file-saver";
 import { SidebarContext } from "../Context/DrawerContext";
+import { GetDetailPayment } from "../Redux/APIs/PaymentServices";
+import Modal from "./Modals";
+import { useNavigate } from "react-router-dom";
 
 function WatchPage() {
+  const navigate = useNavigate();
+
   const sameClass = "w-full gap-6 flex-colo min-h-screen";
   const [play, setPlay] = useState(false);
   const { progress, setProgress } = useContext(SidebarContext);
   const { id } = useParams();
   const dispatch = useDispatch();
+  const [isWatch, setWatch] = useState(false);
+  const [showModal, setShowModal] = useState(false); // State for controlling modal visibility
 
   // get movie by id
   const { isLoading, isError, movie } = useSelector(
@@ -47,12 +54,31 @@ function WatchPage() {
   };
 
   useEffect(() => {
+    const fetchAPI = async () => {
+      const data1 = JSON.parse(localStorage.getItem("userInfo"));
+      const data = await GetDetailPayment(data1.email);
+      console.log(data);
+      setWatch(data.isWatch);
+      if (!data.isWatch) {
+        setShowModal(true); // Show modal if user can't watch the video
+      }
+    };
+    fetchAPI();
+  }, []);
+
+  useEffect(() => {
     // get movie details
     dispatch(getMovieByIdAction(id));
   }, [dispatch, id]);
 
+  const closeModal = () => {
+    navigate("/payment");
+  };
+
   return (
     <Layout>
+      <Modal isOpen={showModal} closeModal={closeModal} /> {/* Render modal */}
+
       <div className="container mx-auto bg-dry p-6 mb-12">
         <div className="flex-btn flex-wrap mb-6 gap-2 bg-main rounded border border-gray-800 p-6">
           <Link
@@ -66,8 +92,8 @@ function WatchPage() {
               onClick={() => LikeMovie(movie, dispatch, userInfo)}
               disabled={likeLoading}
               className={` hover:text-subMain
-            ${isLiked(movie) ? "text-subMain" : " text-white"}
-            transitions bg-opacity-30 bg-white rounded px-4 py-3 text-sm`}
+                ${isLiked(movie) ? "text-subMain" : " text-white"}
+                transitions bg-opacity-30 bg-white rounded px-4 py-3 text-sm`}
             >
               <FaHeart />
             </button>
@@ -83,11 +109,11 @@ function WatchPage() {
 
         {/* watch video */}
         {play ? (
-          <video controls autoPlay={play} className="w-full h-full rounded">
-            <source src={movie?.video} type="video/mp4" title={movie?.name} />
+          <video style={{ height: "475px" }} controls autoPlay={play} className="w-full h-full rounded">
+          <source src={movie?.video} type="video/mp4" title={movie?.name} />
           </video>
         ) : (
-          <div className="w-full h-screen rounded-lg overflow-hidden relative">
+          <div className="w-full h-screen rounded-lg overflow-hidden relative" style={{height: "475px"}}>
             {isLoading ? (
               <div className={sameClass}>
                 <Loader />

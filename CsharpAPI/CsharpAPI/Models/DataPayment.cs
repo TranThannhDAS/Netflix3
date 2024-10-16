@@ -12,6 +12,7 @@
         public string? Resolution { get; set; }
         public string? SupportDevices { get; set; }
         public string? NumberDevices { get; set; }
+        public string? Hours { get; set; }
     }
 
 }
