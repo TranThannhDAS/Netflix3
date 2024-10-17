@@ -55,14 +55,25 @@ function WatchPage() {
 
   useEffect(() => {
     const fetchAPI = async () => {
-      const data1 = JSON.parse(localStorage.getItem("userInfo"));
+      // Lấy giá trị từ localStorage
+      const storedData = localStorage.getItem("userInfo");
+
+      if (!storedData) {
+        window.location.href = "/login";
+        return;
+      }
+
+      const data1 = JSON.parse(storedData);
+
       const data = await GetDetailPayment(data1.email);
-      console.log(data);
       setWatch(data.isWatch);
+      
+      // Hiển thị modal nếu user không thể xem video
       if (!data.isWatch) {
-        setShowModal(true); // Show modal if user can't watch the video
+        setShowModal(true); 
       }
     };
+
     fetchAPI();
   }, []);
 
