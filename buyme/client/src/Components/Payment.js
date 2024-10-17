@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { createOrder, GetDetailPayment, getPaymentconfig } from "../Redux/APIs/PaymentServices";
 import SideBar from "../Screens/Dashboard/SideBar";
 import './Payment.css';
+import ClipLoader from "react-spinners/ClipLoader";
 
 const Payment = () => {
     const [paymentData, setPaymentData] = useState(null);
     const [orderDetail, setorderDetail] = useState(null);
     const [isDate, setDate] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -34,13 +36,19 @@ const Payment = () => {
 
     }
     useEffect(() =>{
-        const call = async () =>{            
-            if(orderDetail != null){
-                const result = await createOrder(orderDetail)
-                window.location.href = `https://www.sandbox.paypal.com/checkoutnow?token=${result.orderId}`;
-
-            }  
-        }
+        const call = async () => {
+            if (orderDetail != null) {
+                setIsLoading(true);
+                try {
+                    const result = await createOrder(orderDetail);
+                    window.location.href = `https://www.sandbox.paypal.com/checkoutnow?token=${result.orderId}`;
+                } catch (error) {
+                    console.error("Error creating order:", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
         call();
     },[orderDetail])
     return (
@@ -87,7 +95,11 @@ const Payment = () => {
                             <p>No payment data available.</p>
                         )}
                     </div>
-
+                    {isLoading && (
+                        <div className="loading-overlay">
+                            <ClipLoader color={"#ffffff"} loading={isLoading} size={50} />
+                        </div>
+                    )}
                 </div>
 
             </SideBar>
