@@ -1,0 +1,9 @@
+﻿services:
+  csharpapi:
+    image: ${DOCKER_REGISTRY-}csharpapi
+    build:
+      context: .
+      dockerfile: CsharpAPI/Dockerfile
+    ports:
+      - "5227:8080"
+      - "8081:8081"
